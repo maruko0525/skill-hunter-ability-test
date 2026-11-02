@@ -12,9 +12,66 @@ function field(parent,label,value='',type='text'){let l=el('label','',label);par
 function list(){page='status';overlay.hidden=false;let b=shell('ABILITY STATUS');const sorted=[...data.abilities].sort((a,c)=>c.ap-a.ap||c.last-a.last);let total=sorted.reduce((s,a)=>s+a.ap,0);b.append(el('div','ap-title','LEVEL '+String(1+Math.floor(total/10)).padStart(2,'0')),el('div','ap-sub','TOTAL AP '+total));let max=Math.max(1,...sorted.map(a=>a.ap));sorted.forEach((a,i)=>{let r=el('div','ap-row');r.append(el('div','ap-flex'));r.firstChild.append(el('span','',`#${i+1} ${a.name}`),el('span','',`${a.ap} AP · Lv.${1+Math.floor(a.ap/10)}`));let track=el('div','ap-track');let fill=el('div','ap-fill');fill.style.width=(a.ap/max*100)+'%';track.append(fill);r.append(track);b.append(r)});let actions=el('div','ap-actions');b.append(actions);btn(actions,'⚔️ 魔導書へ',()=>{overlay.hidden=true;document.getElementById('hunter').classList.remove('hidden');document.getElementById('hunterGrimoire').classList.add('hide');document.getElementById('hunterSplash').classList.remove('hide')},'ap-main');btn(actions,'📓 実践ノート',logs);btn(actions,'⚙️ アビリティ設定',settings);btn(actions,'⬇ バックアップ',backup)}
 function mapList(){try{return db.maps||[]}catch{return []}}
 function related(m){if(!m)return data.abilities;let ids=data.associations[m.id];if(!ids){let text=m.name;let expected=/犬|動物|ペット/.test(text)?['医学・健康','動物ケア','観察・分析','判断・対応']:/法律|解雇|労働|傷病/.test(text)?['法律・制度','観察・分析','判断・対応']:/投資|経済|金融/.test(text)?['金融・経済','情報収集','観察・分析']:/電気|工作/.test(text)?['科学・技術','生活・実務','判断・対応']:['観察・分析','情報収集','判断・対応'];ids=data.abilities.filter(a=>expected.includes(a.name)).map(a=>a.id);data.associations[m.id]=ids;save()}return data.abilities.filter(a=>ids.includes(a.id))}
-function logs(){page='logs';overlay.hidden=false;let b=shell('PRACTICE LOG');let a=el('div','ap-actions');b.append(a);btn(a,'＋ 実践記録',()=>editor());btn(a,'← ステータス',list);data.logs.forEach(l=>{let d=el('div','ap-log');d.append(el('strong','',l.title),el('div','ap-muted',l.date+' '+(l.awarded?' · +1 AP':'')),el('div','',l.tags.map(x=>'#'+x).join(' ')));let ac=el('div','ap-actions');btn(ac,'開く・編集',()=>editor(l));btn(ac,'削除',()=>{if(!confirm('記録と獲得APを削除しますか？'))return;if(l.awarded){let ab=data.abilities.find(a=>a.id===l.abilityId);if(ab)ab.ap=Math.max(0,ab.ap-1)}data.logs=data.logs.filter(x=>x.id!==l.id);save();logs()});d.append(ac);b.append(d)})}
-function editor(existing={},initialMap=null,initialTitle=''){page='editor';overlay.hidden=false;let b=shell('PRACTICE LOG');b.append(el('h3','',existing.id?'実践記録の編集':'新しい実践記録'));let title=field(b,'題名',existing.title||initialTitle);let date=field(b,'日付',existing.date||new Date().toISOString().slice(0,10),'date');let body=field(b,'実際に起こったこと・対応',existing.body||'','textarea');let learned=field(b,'今回習得したこと（1つの習得に1AP）',existing.learned||'','textarea');let tags=field(b,'ハッシュタグ（空白で区切る）',(existing.tags||[]).map(x=>'#'+x).join(' '));b.append(el('label','','関連するマップ'));let maps=mapList(),select=el('select');select.append(new Option('関連マップなし',''));maps.forEach(m=>select.append(new Option(m.name,m.id)));select.value=existing.mapId||initialMap?.id||'';b.append(select);b.append(el('label','','今回成長したアビリティ'));let ability=el('select');b.append(ability);function choice(){ability.replaceChildren();let map=maps.find(m=>m.id===select.value);related(map).forEach(a=>ability.append(new Option(a.name,a.id)));if(existing.abilityId&&[...ability.options].some(x=>x.value===existing.abilityId))ability.value=existing.abilityId}select.onchange=choice;choice();if(existing.awarded)b.append(el('p','ap-muted','この記録はAP獲得済み。重複付与はできません。'));let acts=el('div','ap-actions');b.append(acts);function commit(award){if(!title.value.trim())return alert('題名を入力してください');if(award&&!learned.value.trim())return alert('今回習得したことを記入してください');if(award&&!ability.value)return alert('関連アビリティを設定してください');let l=existing.id?data.logs.find(x=>x.id===existing.id):null;if(award&&l?.awarded)return alert('この記録ではAP獲得済みです');let values={title:title.value.trim(),date:date.value,body:body.value,learned:learned.value,tags:[...new Set(tags.value.split(/[\s,#＃、]+/).filter(Boolean))],mapId:select.value};if(l)Object.assign(l,values);else{l={id:id(),...values,awarded:false,abilityId:null};data.logs.unshift(l)}if(award){l.awarded=true;l.abilityId=ability.value;let a=data.abilities.find(x=>x.id===ability.value);a.ap++;a.last=Date.now()}save();logs()}
-btn(acts,'記録だけ保存',()=>commit(false));btn(acts,'＋1 AP 獲得',()=>commit(true),'ap-main').disabled=!!existing.awarded;btn(acts,'戻る',logs)}
+function allocationsOf(l){
+ if(Array.isArray(l.allocations))return l.allocations.filter(x=>typeof x==='string');
+ return l.awarded&&l.abilityId?[l.abilityId]:[];
+}
+function applyDelta(prev,next){
+ const delta=new Map();prev.forEach(x=>delta.set(x,(delta.get(x)||0)-1));next.forEach(x=>delta.set(x,(delta.get(x)||0)+1));
+ for(let [key,n] of delta){const a=data.abilities.find(a=>a.id===key);if(a){a.ap=Math.max(0,(Number(a.ap)||0)+n);if(n>0)a.last=Date.now()}}
+}
+function logs(){page='logs';overlay.hidden=false;let b=shell('PRACTICE LOG');let a=el('div','ap-actions');b.append(a);btn(a,'＋ 実践記録',()=>editor());btn(a,'← ステータス',list);data.logs.forEach(l=>{let d=el('div','ap-log');const earned=allocationsOf(l).length;d.append(el('strong','',l.title),el('div','ap-muted',l.date+(earned?' · +'+earned+' AP':'')),el('div','',(l.tags||[]).map(x=>'#'+x).join(' ')));let ac=el('div','ap-actions');btn(ac,'開く・編集',()=>editor(l));btn(ac,'削除',()=>{if(!confirm('記録と獲得APを削除しますか？'))return;applyDelta(allocationsOf(l),[]);data.logs=data.logs.filter(x=>x.id!==l.id);save();logs()});d.append(ac);b.append(d)})}
+function editor(existing={},initialMap=null,initialTitle=''){
+ page='editor';overlay.hidden=false;let b=shell('PRACTICE LOG');b.append(el('h3','',existing.id?'実践記録の編集':'新しい実践記録'));
+ let title=field(b,'題名',existing.title||initialTitle);
+ let date=field(b,'日付',existing.date||new Date().toISOString().slice(0,10),'date');
+ let body=field(b,'実際に起こったこと・対応',existing.body||'','textarea');
+ let learned=field(b,'今回習得したこと（複数記入できます）',existing.learned||'','textarea');
+ let tags=field(b,'ハッシュタグ（空白で区切る）',(existing.tags||[]).map(x=>'#'+x).join(' '));
+ b.append(el('label','','関連するマップ'));
+ let maps=mapList(),select=el('select');select.append(new Option('関連マップなし',''));
+ maps.forEach(m=>select.append(new Option(m.name,m.id)));select.value=existing.mapId||initialMap?.id||'';b.append(select);
+ let oldAlloc=allocationsOf(existing);
+ b.append(el('label','','習得AP数（自己申告・1つの習得に1AP）'));
+ let count=el('input');count.type='number';count.min='0';count.max='100';count.step='1';count.value=String(oldAlloc.length||1);b.append(count);
+ b.append(el('p','ap-muted','習得した数だけ設定して、それぞれのAPを関連アビリティへ振り分けてください。記録だけ残す場合は0APも選べます。'));
+ b.append(el('h3','','APごとの振り分け先'));
+ const slots=el('div');b.append(slots);
+ let current=oldAlloc.slice();
+ function drawSlots(){
+  const n=Math.max(0,Math.min(100,Number(count.value)||0));
+  slots.replaceChildren();let allowed=related(maps.find(m=>m.id===select.value));
+  for(let i=0;i<n;i++){
+   let row=el('div','ap-flex');row.style.margin='6px 0';let lab=el('span','','AP '+(i+1));lab.style.minWidth='55px';row.append(lab);
+   let pick=el('select');pick.style.margin='0';pick.style.flex='1';
+   if(!allowed.length)pick.append(new Option('関連アビリティがありません',''));
+   allowed.forEach(a=>pick.append(new Option(a.name,a.id)));
+   pick.value=allowed.some(a=>a.id===current[i])?current[i]:(allowed[0]?.id||'');
+   current[i]=pick.value;
+   pick.onchange=()=>{current[i]=pick.value};row.append(pick);slots.append(row);
+  }
+  current.length=n;
+ }
+ count.oninput=()=>{let n=Number(count.value);if(!Number.isInteger(n)||n<0||n>100){slots.replaceChildren();slots.append(el('p','ap-muted','AP数は0〜100の整数にしてください。'));return}drawSlots()};
+ select.onchange=()=>{current=[];drawSlots()};drawSlots();
+ if(oldAlloc.length)b.append(el('p','ap-muted','保存済みのAPも編集できます。保存すると差分だけを反映します。'));
+ let acts=el('div','ap-actions');b.append(acts);
+ function commit(award){
+  if(!title.value.trim())return alert('題名を入力してください');
+  let n=Number(count.value);if(!Number.isInteger(n)||n<0||n>100)return alert('AP数は0〜100の整数にしてください');
+  if(award&&n===0)return alert('APを獲得する場合は1以上を指定してください');
+  if(award&&!learned.value.trim())return alert('今回習得したことを記入してください');
+  const next=award?current.slice(0,n):oldAlloc.slice();
+  if(award&&(next.length!==n||next.some(x=>!data.abilities.some(a=>a.id===x))))return alert('すべてのAPの振り分け先を選んでください');
+  let l=existing.id?data.logs.find(x=>x.id===existing.id):null;
+  let prev=l?allocationsOf(l):[];
+  const values={title:title.value.trim(),date:date.value,body:body.value,learned:learned.value,tags:[...new Set(tags.value.split(/[\s,#＃、]+/).filter(Boolean))],mapId:select.value};
+  if(!l){l={id:id(),...values};data.logs.unshift(l)}else Object.assign(l,values);
+  applyDelta(prev,next);l.allocations=next;l.awarded=next.length>0;l.abilityId=next[0]||null;
+  save();logs();
+ }
+ btn(acts,'記録だけ保存',()=>commit(false));btn(acts,'APを振り分けて保存',()=>commit(true),'ap-main');btn(acts,'戻る',logs);
+}
 function settings(){page='settings';overlay.hidden=false;let b=shell('ABILITY SETTINGS');let row=el('div','ap-actions');b.append(row);btn(row,'← ステータス',list);let name=field(b,'アビリティを追加');btn(b,'＋ 追加',()=>{let v=name.value.trim();if(!v||data.abilities.some(a=>a.name===v))return alert('名前を確認してください');data.abilities.push({id:id(),name:v,ap:0,last:0});save();settings()});b.append(el('h3','','アビリティ名の編集'));data.abilities.forEach(a=>{let d=el('div','ap-flex');let input=el('input');input.value=a.name;input.style.margin='3px 0';d.append(input);btn(d,'保存',()=>{let v=input.value.trim();if(!v||data.abilities.some(x=>x.id!==a.id&&x.name===v))return alert('重複または空欄です');a.name=v;save();settings()});b.append(d)});b.append(el('h3','','マップとアビリティの関連付け'));const maps=mapList();let sel=el('select');maps.forEach(m=>sel.append(new Option(m.name,m.id)));b.append(sel);let checks=el('div');b.append(checks);function render(){checks.replaceChildren();let m=maps.find(x=>x.id===sel.value);if(!m)return;let ids=related(m).map(x=>x.id);data.abilities.forEach(a=>{let label=el('label','ap-check');let inp=el('input');inp.type='checkbox';inp.checked=ids.includes(a.id);inp.onchange=()=>{let set=new Set(data.associations[m.id]||[]);inp.checked?set.add(a.id):set.delete(a.id);data.associations[m.id]=[...set];save()};label.append(inp,document.createTextNode(a.name));checks.append(label)})}sel.onchange=render;render()}
 function backup(){let payload={format:KEY,exportedAt:new Date().toISOString(),data};let a=el('a');let url=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));a.href=url;a.download='SKILL_HUNTER_実践ノート_APバックアップ.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),8000)}
 let restore=el('input');restore.type='file';restore.accept='.json,application/json';restore.hidden=true;restore.onchange=async()=>{let f=restore.files?.[0];if(!f)return;try{let p=JSON.parse(await f.text());if(p.format!==KEY||!Array.isArray(p.data?.logs)||!Array.isArray(p.data?.abilities))throw Error('形式が違います');if(!confirm('現在の実践ノートとAPを置き換えますか？'))return;data=p.data;save();list()}catch(e){alert('読み込みできません: '+e.message)}restore.value=''};document.body.append(restore);
