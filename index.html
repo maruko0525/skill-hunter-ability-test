@@ -24,6 +24,24 @@ body{background:radial-gradient(ellipse at 100% 0%,#c6e3ed88,transparent 52%),li
 #aiTextDialog button:focus-visible{outline:3px solid #f3accb;outline-offset:3px}
 #aiTextDialog>p{color:#ecd9e3!important;-webkit-text-fill-color:#ecd9e3}
 #aiTextDialog select,#aiTextDialog option,#aiTextDialog textarea{background:#fff8fb;color:#221725;-webkit-text-fill-color:#221725}
+
+/* Shelf search and accessible navigation */
+#hunter .paper.search-hit{border:3px solid #ae731c;background:linear-gradient(145deg,#fff3bb,#efcb7c);box-shadow:inset 0 0 20px #ffe99a,0 0 12px #e8b64f;animation:hunterGlow 1.8s ease-in-out 2 alternate}
+#hunter .paper.search-hit:before{color:#9b491b}
+#hunter .search-badge{font-size:11px;font-weight:800;color:#513000;background:#ffe7a0;border:1px solid #aa761e;border-radius:20px;padding:3px 8px}
+#hunter .shelf-search-info{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;color:#ffe6a7;font-size:13px;width:100%}
+#hunter .shelf-search-info[hidden]{display:none}
+#hunter .card-actions{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+#hunter .card-actions button{font-size:12px;padding:8px 12px;min-height:40px}
+#hunter .map-move{background:#33201e;color:#ffe7bd;border-color:#a47a4c}
+#hunterStatusOpen,#hunterAPRestore{color:#000!important;-webkit-text-fill-color:#000!important;background:#fff!important;text-shadow:none!important}
+#shelfMoveDialog{width:min(430px,90vw);max-height:85dvh;overflow:auto;box-sizing:border-box}
+#shelfMoveDialog button{background:#fff8ed;color:#241a18;-webkit-text-fill-color:#241a18}
+#shelfMoveDialog label{display:block;margin:14px 0 5px}
+@keyframes hunterGlow{from{box-shadow:inset 0 0 12px #ffe99a,0 0 7px #dca53c}to{box-shadow:inset 0 0 28px #fff7c5,0 0 20px #ffc94a}}
+@media(prefers-reduced-motion:reduce){#hunter .paper.search-hit{animation:none}}
+
+#readEdit,#readClose{color:#000!important;-webkit-text-fill-color:#000!important;background:#fff!important}
 </style><style>
 body{background:#100c13;color:#e8dde5}header{background:linear-gradient(90deg,#160913,#3b1225);border-color:#6b3141}header h1:before{background-image:url('./icon-512.png')}#home{background:#180e19}#bar{background:#211623;border-bottom-color:#693b50;color:#f1dbe6}#bar button{background:#332032;border-color:#71445a;color:#f9e5ed}#canvas{background-color:#16111c;background-image:radial-gradient(#70455855 1px,transparent 1px),radial-gradient(ellipse at center,#231827,#0e0c14);background-size:25px 25px,100% 100%}#timeline{background:#1b111e}.event{background:#382632;color:#fff}#readPanel{background:#281b29!important;color:#f5eaf0!important;border-color:#794c61!important}#readPanel #readNote,#readPanel p{color:#f6e7ed!important}.hint{background:#271627;color:#f4d9e6;border-color:#76435d}button.primary{background:#8a284d;border-color:#8a284d}dialog{background:linear-gradient(135deg,#372337,#1e1624);color:#fff;border-color:#8e5972}dialog input,dialog select,dialog textarea{background:#fdf5f7;color:#221725}.node rect{stroke:#b77b9d}.node.selected rect{stroke:#e25389}svg .edge path:not(.hit){stroke:#96546f}#hunter{position:fixed;inset:0;z-index:300;background:radial-gradient(ellipse at 50% 60%,#42132c 0%,#130d16 60%,#08070c);color:#fbead3;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:auto;padding:env(safe-area-inset-top) 8px env(safe-area-inset-bottom)}#hunter.hidden{display:none}#hunter h2{font-family:Georgia,serif;font-size:clamp(27px,7vw,48px);letter-spacing:.15em;color:#e9c6a7;text-shadow:0 0 21px #b21e58;text-align:center;margin:14px 0}#hunter .tagline{font-size:12px;letter-spacing:.23em;color:#ca94ae;text-align:center}#hunter .splash-book{display:block;border:0;background:transparent;padding:0;width:min(83vw,410px);cursor:pointer;filter:drop-shadow(0 0 25px #8d315c);animation:pulse 3s infinite alternate}#hunter .splash-book img{display:block;width:100%;max-height:65dvh;object-fit:contain;border-radius:17px}@keyframes pulse{to{filter:drop-shadow(0 0 49px #c83d68)}}#hunter .tap{color:#e9c6cd;margin:15px 0;font-size:14px;letter-spacing:.18em}#hunter .splash{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1}#hunter .splash.hide,#hunter .grimoire.hide{display:none}#hunter .grimoire{width:100%;max-width:900px;margin:auto;display:flex;flex-direction:column;align-items:center;gap:10px}#hunter .spread{display:grid;grid-template-columns:1fr 1fr;width:100%;min-height:min(67dvh,620px);perspective:1200px;filter:drop-shadow(0 15px 25px #020103)}#hunter .page{background:linear-gradient(100deg,#bd9b6b,#edd6a1 17%,#e6c593 89%,#a58152);box-shadow:inset 0 0 36px #60371e80;border:4px solid #5e292c;padding:clamp(7px,2.1vw,22px);display:flex;flex-direction:column;gap:9px;position:relative;overflow:hidden}#hunter .page:first-child{border-radius:18px 3px 3px 18px;transform-origin:right center}#hunter .page:last-child{border-radius:3px 18px 18px 3px;transform-origin:left center}#hunter .page:after{content:'';pointer-events:none;position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 19px,#57391d08 20px)}#hunter .paper{height:50%;min-height:100px;position:relative;background:linear-gradient(160deg,#f7e8bf,#d7b683);border:1.5px solid #805a38;box-shadow:0 3px 8px #603c3299;padding:8px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:9px;cursor:pointer;overflow:hidden;color:#301d18;border-radius:2px}#hunter .paper:before{content:'◆';position:absolute;top:3px;left:7px;color:#862b3b;font-size:12px}#hunter .paper strong{font-size:clamp(12px,3vw,19px);line-height:1.4;overflow-wrap:anywhere;text-align:center}#hunter .paper em{color:#754c40;font-style:normal;font-size:clamp(9px,2vw,12px)}#hunter .paper .sigil{font-size:clamp(19px,5vw,38px);color:#8e2e42}#hunter .turn{display:flex;gap:18px;justify-content:center;align-items:center}#hunter button.ctrl{border-color:#a96e60;background:#25141e;color:#f0d5bd}#hunter .topline{width:100%;display:flex;align-items:center;justify-content:space-between}#hunter .topline button{font-size:12px}#hunter .turning .page:last-child{animation:flip .5s ease-in-out}@keyframes flip{50%{transform:rotateY(-28deg);filter:brightness(.7)}100%{transform:rotateY(0)}}#hunter .bookshelf-tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}#hunter .bookshelf-tools button{font-size:12px}#hunter .foot{font-size:12px;color:#c89fad}#hunter .screenTitle{font-size:19px;color:#e9c29c;font-family:Georgia,serif}#hunter .opening .splash-book{animation:openbook .5s ease-out}@keyframes openbook{to{transform:rotateY(-80deg);opacity:0}}@media(max-width:480px){#hunter .spread{min-height:62dvh}#hunter .page{padding:7px;gap:7px}.splash-book{max-height:68dvh}#hunter h2{margin:5px 0}}
 header #returnToCover{background:#6d2344;border:1px solid #d582a6;color:#fff3f7;white-space:nowrap}header #returnToCover[hidden]{display:none}@media(max-width:550px){header #returnToCover{font-size:11px;padding:8px 7px}}
@@ -584,7 +602,37 @@ a3Select.onchange=()=>updateA3Info();
 
 <script>
 (function(){
-const H=id=>document.getElementById(id);let spread=0;
+const H=id=>document.getElementById(id);let spread=0;let shelfQuery="",hitCursorId=null;
+
+const shelfMatches=()=>shelfQuery?(db.maps||[]).filter(m=>m.name.toLocaleLowerCase().includes(shelfQuery.toLocaleLowerCase())):[];
+const searchInfo=document.createElement('div');searchInfo.className='shelf-search-info';searchInfo.hidden=true;
+const searchCount=document.createElement('span');searchCount.setAttribute('role','status');searchCount.setAttribute('aria-live','polite');
+const hitNext=document.createElement('button');hitNext.className='ctrl';hitNext.textContent='次のヒットへ';
+const hitClear=document.createElement('button');hitClear.className='ctrl';hitClear.textContent='検索解除';
+searchInfo.append(searchCount,hitNext,hitClear);H('hunterSpread').before(searchInfo);
+hitClear.onclick=()=>{shelfQuery='';hitCursorId=null;renderHunter()};
+hitNext.onclick=()=>{const hits=shelfMatches();if(!hits.length)return;const i=hits.findIndex(m=>m.id===hitCursorId);const next=hits[(i+1)%hits.length];hitCursorId=next.id;spread=Math.floor(db.maps.findIndex(m=>m.id===next.id)/4);renderHunter();const target=H('hunterSpread').querySelector('[data-map-id="'+CSS.escape(next.id)+'"]');target?.focus({preventScroll:true})};
+function reorderShelf(maps,id,target){const from=maps.findIndex(m=>m.id===id);if(from<0)throw Error('移動するカードがありません');const next=maps.slice(),item=next.splice(from,1)[0];next.splice(Math.max(0,Math.min(target,next.length)),0,item);return next;}
+function moveShelfCard(id){
+ const m=db.maps.find(m=>m.id===id);if(!m)return;
+ const dlg=document.createElement('dialog');dlg.id='shelfMoveDialog';
+ const title=document.createElement('h3');title.textContent='カードを移動';
+ const desc=document.createElement('p');desc.textContent=m.name+'：移動先へ挿入し、間のカードを順にずらします。';
+ const pageLabel=document.createElement('label');pageLabel.textContent='移動先のページ';pageLabel.htmlFor='shelfMovePage';
+ const page=document.createElement('select');page.id='shelfMovePage';
+ const slotLabel=document.createElement('label');slotLabel.textContent='移動先の位置';slotLabel.htmlFor='shelfMoveSlot';
+ const slot=document.createElement('select');slot.id='shelfMoveSlot';
+ const n=db.maps.length;for(let i=0;i<Math.ceil(n/4);i++)page.add(new Option((i+1)+'ページ',String(i)));
+ const current=db.maps.findIndex(m=>m.id===id);page.value=String(Math.floor(current/4));
+ const labels=['左上','左下','右上','右下'];
+ const update=()=>{slot.replaceChildren();for(let i=0;i<4;i++){const pos=Number(page.value)*4+i;if(pos<n)slot.add(new Option(labels[i],String(pos)));}};
+ page.onchange=update;update();slot.value=String(current);
+ const actions=document.createElement('div');actions.className='actions';
+ const cancel=document.createElement('button');cancel.textContent='取消';cancel.onclick=()=>dlg.close();
+ const go=document.createElement('button');go.textContent='ここに移動';go.onclick=()=>{const target=Number(slot.value);const next={...db,maps:reorderShelf(db.maps,id,target)};try{localStorage.setItem('skill-hunter-v1',JSON.stringify(next))}catch{alert('保存できなかったため移動しませんでした。');return;}db=next;spread=Math.floor(target/4);dlg.close();renderHunter()};
+ actions.append(cancel,go);dlg.append(title,desc,pageLabel,page,slotLabel,slot,actions);dlg.addEventListener('close',()=>dlg.remove(),{once:true});document.body.append(dlg);dlg.showModal();
+}
+
 const originalHome=home,originalOpen=openMap;
 const clearHunter=()=>H('hunter').classList.add('hidden');
 const showHunter=()=>{H('hunter').classList.remove('hidden');H('hunterSplash').classList.add('hide');H('hunterGrimoire').classList.remove('hide');renderHunter()};
@@ -619,13 +667,15 @@ function renderHunter(){
  for(let i=0;i<4;i++){
   const m=maps[spread*4+i],card=document.createElement('div'),button=document.createElement('button');card.className='hunter-card';button.className='paper';button.type='button';
   if(m){
+   button.dataset.mapId=m.id;if(shelfQuery&&shelfMatches().some(hit=>hit.id===m.id)){button.classList.add('search-hit');const badge=document.createElement('span');badge.className='search-badge';badge.textContent='✦ 検索ヒット';button.append(badge);}
    const title=document.createElement('strong');title.textContent=m.name;
    const deco=document.createElement('span');deco.className='sigil';deco.textContent=['⚖','✦','⚔','✧'][i];
    const count=document.createElement('em');count.textContent=m.nodes.length+' 項目';button.append(deco,title,count);button.onclick=()=>openMap(m);card.append(button);
-   const del=document.createElement('button');del.type='button';del.className='map-delete';del.textContent='削除';del.setAttribute('aria-label',m.name+'を削除');del.onclick=()=>deleteHunterMap(m.id);card.append(del);
+   const del=document.createElement('button');del.type='button';del.className='map-delete';del.textContent='削除';del.setAttribute('aria-label',m.name+'を削除');del.onclick=()=>deleteHunterMap(m.id);const acts=document.createElement('div');acts.className='card-actions';const move=document.createElement('button');move.type='button';move.className='map-move';move.textContent='移動';move.setAttribute('aria-label',m.name+'を移動');move.onclick=()=>moveShelfCard(m.id);acts.append(move,del);card.append(acts);
   }else{button.innerHTML='<span class="sigil">✧</span><em>未収録</em>';button.setAttribute('aria-label','空きカードにJSONを読み込む');button.onclick=()=>H('hunterImport').click();card.append(button);}
   slots[Math.floor(i/2)].append(card);
  }
+ const hits=shelfMatches();searchInfo.hidden=!shelfQuery;searchCount.textContent='「'+shelfQuery+'」 全'+hits.length+'件・このページに'+maps.slice(spread*4,spread*4+4).filter(m=>hits.some(h=>h.id===m.id)).length+'件';hitNext.disabled=hits.length<2;
  H('spreadNumber').textContent=(spread+1)+' / '+total;H('prevSpread').disabled=spread===0;H('nextSpread').disabled=spread>=total-1;
  H('hunterGrimoire').querySelector('.foot').textContent=maps.length?'1カード = 1マップ ｜ カードで開く・下の「削除」で削除':'マップはまだありません。「＋ 新規マップ」または「＋ JSON読み込み」から始めてください。';
 }
@@ -671,7 +721,7 @@ H('nextSpread').onclick=()=>flipSpread(1);
 let sx=0;H('hunterSpread').addEventListener('touchstart',e=>{sx=e.changedTouches[0].clientX},{passive:true});H('hunterSpread').addEventListener('touchend',e=>{let dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>65){if(dx<0)H('nextSpread').click();else H('prevSpread').click()}},{passive:true});
 H('hunterImport').onclick=()=>H('restore').click();H('hunterExport').onclick=()=>H('backup').click();
 H('hunterNew').onclick=()=>{let name=prompt('新しいマップ名');if(!name)return;let m={id:uid(),name,nodes:[{id:uid(),title:name,note:'',kind:'項目',x:0,y:0,color:'#dfd0e2'}],edges:[],updated:Date.now()};db.maps.push(m);persist();renderHunter();};
-H('hunterSearch').onclick=()=>{let q=prompt('マップ名を検索');if(!q)return;let i=db.maps.findIndex(m=>m.name.toLowerCase().includes(q.toLowerCase()));if(i<0){alert('該当するマップがありません');return}spread=Math.floor(i/4);renderHunter()};
+H('hunterSearch').onclick=()=>{const q=prompt('マップ名を検索',shelfQuery);if(q===null)return;shelfQuery=q.trim();hitCursorId=null;const hits=shelfMatches();if(hits.length){hitCursorId=hits[0].id;spread=Math.floor(db.maps.findIndex(m=>m.id===hitCursorId)/4)}renderHunter();if(shelfQuery&&!hits.length)alert('該当するマップがありません');};
 // Navigation repair: the original back button captured the original home function
 // before the skill-hunter wrapper was installed. Rebind it explicitly.
 const showCover=()=>{

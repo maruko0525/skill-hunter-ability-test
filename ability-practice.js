@@ -11,7 +11,8 @@ function btn(parent,text,cb,cls=''){let b=el('button',cls,text);b.type='button';
 function field(parent,label,value='',type='text'){let l=el('label','',label);parent.append(l);let inp=el(type==='textarea'?'textarea':'input');if(type!=='textarea')inp.type=type;inp.value=value;parent.append(inp);return inp}
 function list(){page='status';overlay.hidden=false;let b=shell('ABILITY STATUS');const sorted=[...data.abilities].sort((a,c)=>c.ap-a.ap||c.last-a.last);let total=sorted.reduce((s,a)=>s+a.ap,0);b.append(el('div','ap-title','LEVEL '+String(1+Math.floor(total/10)).padStart(2,'0')),el('div','ap-sub','TOTAL AP '+total));let max=Math.max(1,...sorted.map(a=>a.ap));sorted.forEach((a,i)=>{let r=el('div','ap-row');r.append(el('div','ap-flex'));r.firstChild.append(el('span','',`#${i+1} ${a.name}`),el('span','',`${a.ap} AP · Lv.${1+Math.floor(a.ap/10)}`));let track=el('div','ap-track');let fill=el('div','ap-fill');fill.style.width=(a.ap/max*100)+'%';track.append(fill);r.append(track);b.append(r)});let actions=el('div','ap-actions');b.append(actions);btn(actions,'⚔️ 魔導書へ',()=>{overlay.hidden=true;document.getElementById('hunter').classList.remove('hidden');document.getElementById('hunterGrimoire').classList.add('hide');document.getElementById('hunterSplash').classList.remove('hide')},'ap-main');btn(actions,'📓 実践ノート',logs);btn(actions,'⚙️ アビリティ設定',settings);btn(actions,'⬇ バックアップ',backup)}
 function mapList(){try{return db.maps||[]}catch{return []}}
-function related(m){if(!m)return data.abilities;let ids=data.associations[m.id];if(!ids){let text=m.name;let expected=/犬|動物|ペット/.test(text)?['医学・健康','動物ケア','観察・分析','判断・対応']:/法律|解雇|労働|傷病/.test(text)?['法律・制度','観察・分析','判断・対応']:/投資|経済|金融/.test(text)?['金融・経済','情報収集','観察・分析']:/電気|工作/.test(text)?['科学・技術','生活・実務','判断・対応']:['観察・分析','情報収集','判断・対応'];ids=data.abilities.filter(a=>expected.includes(a.name)).map(a=>a.id);data.associations[m.id]=ids;save()}return data.abilities.filter(a=>ids.includes(a.id))}
+function related(m){if(!m)return data.abilities;const ids=Array.isArray(data.associations?.[m.id])?data.associations[m.id]:[];return data.abilities.filter(a=>ids.includes(a.id))}
+
 function allocationsOf(l){
  if(Array.isArray(l.allocations))return l.allocations.filter(x=>typeof x==='string');
  return l.awarded&&l.abilityId?[l.abilityId]:[];
@@ -21,8 +22,9 @@ function applyDelta(prev,next){
  for(let [key,n] of delta){const a=data.abilities.find(a=>a.id===key);if(a){a.ap=Math.max(0,(Number(a.ap)||0)+n);if(n>0)a.last=Date.now()}}
 }
 function logs(){page='logs';overlay.hidden=false;let b=shell('PRACTICE LOG');let a=el('div','ap-actions');b.append(a);btn(a,'＋ 実践記録',()=>editor());btn(a,'← ステータス',list);data.logs.forEach(l=>{let d=el('div','ap-log');const earned=allocationsOf(l).length;d.append(el('strong','',l.title),el('div','ap-muted',l.date+(earned?' · +'+earned+' AP':'')),el('div','',(l.tags||[]).map(x=>'#'+x).join(' ')));let ac=el('div','ap-actions');btn(ac,'開く・編集',()=>editor(l));btn(ac,'削除',()=>{if(!confirm('記録と獲得APを削除しますか？'))return;applyDelta(allocationsOf(l),[]);data.logs=data.logs.filter(x=>x.id!==l.id);save();logs()});d.append(ac);b.append(d)})}
-function editor(existing={},initialMap=null,initialTitle=''){
- page='editor';overlay.hidden=false;let b=shell('PRACTICE LOG');b.append(el('h3','',existing.id?'実践記録の編集':'新しい実践記録'));
+function editor(existing={},initialMap=null,initialTitle='',mastery=null){
+ if(!mastery&&existing.source==='learning'&&existing.nodeId){const found=mapList().find(m=>m.id===existing.mapId);if(found){initialMap=found;mastery={nodeId:existing.nodeId};}}
+ page='editor';overlay.hidden=false;let b=shell('PRACTICE LOG');b.append(el('h3','',mastery?'習得完了・APの記録':(existing.id?'実践記録の編集':'新しい実践記録')));
  let title=field(b,'題名',existing.title||initialTitle);
  let date=field(b,'日付',existing.date||new Date().toISOString().slice(0,10),'date');
  let body=field(b,'実際に起こったこと・対応',existing.body||'','textarea');
@@ -31,22 +33,25 @@ function editor(existing={},initialMap=null,initialTitle=''){
  b.append(el('label','','関連するマップ'));
  let maps=mapList(),select=el('select');select.append(new Option('関連マップなし',''));
  maps.forEach(m=>select.append(new Option(m.name,m.id)));select.value=existing.mapId||initialMap?.id||'';b.append(select);
+ if(mastery){select.value=initialMap.id;select.disabled=true;b.append(el('p','ap-muted','この項目の学習記録です。同じ項目の習得APは、再度保存しても差分だけを反映します。'));}
  let oldAlloc=allocationsOf(existing);
  b.append(el('label','','習得AP数（自己申告・1つの習得に1AP）'));
+ if(mastery&&!existing.id)learned.placeholder=initialTitle+'について、何を理解・習得できたか記入してください';
  let count=el('input');count.type='number';count.min='0';count.max='100';count.step='1';count.value=String(oldAlloc.length||1);b.append(count);
  b.append(el('p','ap-muted','習得した数だけ設定して、それぞれのAPを関連アビリティへ振り分けてください。記録だけ残す場合は0APも選べます。'));
  b.append(el('h3','','APごとの振り分け先'));
  const slots=el('div');b.append(slots);
+ const allocationHelp=el('p','ap-muted');b.append(allocationHelp);
  let current=oldAlloc.slice();
  function drawSlots(){
   const n=Math.max(0,Math.min(100,Number(count.value)||0));
-  slots.replaceChildren();let allowed=related(maps.find(m=>m.id===select.value));
+  slots.replaceChildren();let allowed=related(maps.find(m=>m.id===select.value));allocationHelp.textContent=select.value?(allowed.length?'このマップに設定済みのアビリティだけ選べます。':'振り分け先が未設定です。「ステータス → アビリティ設定」で、このマップに関連付けてください。'):'関連マップなし：すべてのアビリティから選べます。';
   for(let i=0;i<n;i++){
    let row=el('div','ap-flex');row.style.margin='6px 0';let lab=el('span','','AP '+(i+1));lab.style.minWidth='55px';row.append(lab);
    let pick=el('select');pick.style.margin='0';pick.style.flex='1';
-   if(!allowed.length)pick.append(new Option('関連アビリティがありません',''));
+   pick.append(new Option(allowed.length?'振り分け先を選択':'関連アビリティがありません',''));
    allowed.forEach(a=>pick.append(new Option(a.name,a.id)));
-   pick.value=allowed.some(a=>a.id===current[i])?current[i]:(allowed[0]?.id||'');
+   pick.value=allowed.some(a=>a.id===current[i])?current[i]:'';
    current[i]=pick.value;
    pick.onchange=()=>{current[i]=pick.value};row.append(pick);slots.append(row);
   }
@@ -62,10 +67,13 @@ function editor(existing={},initialMap=null,initialTitle=''){
   if(award&&n===0)return alert('APを獲得する場合は1以上を指定してください');
   if(award&&!learned.value.trim())return alert('今回習得したことを記入してください');
   const next=award?current.slice(0,n):oldAlloc.slice();
-  if(award&&(next.length!==n||next.some(x=>!data.abilities.some(a=>a.id===x))))return alert('すべてのAPの振り分け先を選んでください');
+  const allowedIds=new Set(related(maps.find(m=>m.id===select.value)).map(a=>a.id));
+  if(!award&&oldAlloc.length&&select.value!==(existing.mapId||''))return alert('AP付き記録の関連マップを変更する場合は、振り分け先を選び直し「APを振り分けて保存」を押してください');
+  if(award&&(next.length!==n||next.some(x=>!allowedIds.has(x))))return alert('すべてのAPの振り分け先を選んでください');
   let l=existing.id?data.logs.find(x=>x.id===existing.id):null;
   let prev=l?allocationsOf(l):[];
   const values={title:title.value.trim(),date:date.value,body:body.value,learned:learned.value,tags:[...new Set(tags.value.split(/[\s,#＃、]+/).filter(Boolean))],mapId:select.value};
+  if(mastery)Object.assign(values,{source:'learning',nodeId:mastery.nodeId});
   if(!l){l={id:id(),...values};data.logs.unshift(l)}else Object.assign(l,values);
   applyDelta(prev,next);l.allocations=next;l.awarded=next.length>0;l.abilityId=next[0]||null;
   save();logs();
@@ -77,10 +85,14 @@ function backup(){let payload={format:KEY,exportedAt:new Date().toISOString(),da
 let restore=el('input');restore.type='file';restore.accept='.json,application/json';restore.hidden=true;restore.onchange=async()=>{let f=restore.files?.[0];if(!f)return;try{let p=JSON.parse(await f.text());if(p.format!==KEY||!Array.isArray(p.data?.logs)||!Array.isArray(p.data?.abilities))throw Error('形式が違います');if(!confirm('現在の実践ノートとAPを置き換えますか？'))return;data=p.data;save();list()}catch(e){alert('読み込みできません: '+e.message)}restore.value=''};document.body.append(restore);
 const originalList=list;
 const statusButton=el('button','','✦ STATUS');statusButton.type='button';statusButton.onclick=()=>originalList();document.getElementById('hunterSplash').append(statusButton);
-const nav=el('button','','✦ ステータス');nav.onclick=()=>originalList();document.querySelector('#hunter .bookshelf-tools')?.append(nav);
+const nav=el('button','','✦ ステータス');nav.id='hunterStatusOpen';nav.onclick=()=>originalList();document.querySelector('#hunter .bookshelf-tools')?.append(nav);
 const p=el('button','','📓 実践ノート');p.id='practiceOpen';p.onclick=logs;document.querySelector('#hunter .bookshelf-tools')?.append(p);
 const read=el('button','','📓 実践記録');read.id='readPractice';read.onclick=()=>{let m=null,n=null;try{m=map;n=m?.nodes?.find(x=>x.id===readId)}catch{}editor({},m,n?.title||'')};document.getElementById('readTools')?.append(read);
+
+const masteryButton=el('button','','✓ 習得完了');masteryButton.id='readMastery';masteryButton.style.cssText='background:#fff0c3;color:#211507;-webkit-text-fill-color:#211507;border-color:#bd943a;font-weight:700';
+masteryButton.onclick=()=>{let m,n;try{m=map;n=m?.nodes?.find(x=>x.id===readId)}catch{}if(!m||!n)return alert('項目を選択してください');const previous=data.logs.find(l=>l.source==='learning'&&l.mapId===m.id&&l.nodeId===n.id);editor(previous||{},m,n.title,{nodeId:n.id});};
+document.getElementById('readTools')?.append(masteryButton);
 const back=el('button','','✦ アビリティ');back.onclick=()=>originalList();document.querySelector('header')?.append(back);
-const restored=el('button','','📥 AP復元');restored.onclick=()=>restore.click();document.querySelector('#hunter .bookshelf-tools')?.append(restored);
+const restored=el('button','','📥 AP復元');restored.id='hunterAPRestore';restored.onclick=()=>restore.click();document.querySelector('#hunter .bookshelf-tools')?.append(restored);
 originalList();
 })();
