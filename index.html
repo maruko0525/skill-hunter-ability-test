@@ -26,7 +26,11 @@ body{background:radial-gradient(ellipse at 100% 0%,#c6e3ed88,transparent 52%),li
 #aiTextDialog select,#aiTextDialog option,#aiTextDialog textarea{background:#fff8fb;color:#221725;-webkit-text-fill-color:#221725}
 
 /* Shelf search and accessible navigation */
-#hunter .paper.search-hit{border:3px solid #ae731c;background:linear-gradient(145deg,#fff3bb,#efcb7c);box-shadow:inset 0 0 20px #ffe99a,0 0 12px #e8b64f;animation:hunterGlow 1.8s ease-in-out 2 alternate}
+#hunter .paper.search-hit{--hit-color:#ffbf24;--hit-soft:#fff0aa;border:3px solid #fffbe9;outline:2px solid var(--hit-color);outline-offset:-6px;background:linear-gradient(145deg,#fff3c6,#efd49a);box-shadow:inset 0 0 7px 2px var(--hit-color),inset 0 0 23px var(--hit-soft),0 0 6px 2px #fff,0 0 16px 6px var(--hit-color),0 0 32px var(--hit-color);animation:hunterGlow 1.8s ease-in-out 2 alternate;isolation:isolate}
+#hunter .paper.search-hit[data-glow="cyan"]{--hit-color:#00dcff;--hit-soft:#d0fcff}
+#hunter .paper.search-hit[data-glow="violet"]{--hit-color:#d34bff;--hit-soft:#f3d7ff}
+#hunter .paper.search-hit[data-glow="crimson"]{--hit-color:#ff245b;--hit-soft:#ffdbe2}
+#hunter .paper.search-hit .search-badge{border:2px solid var(--hit-color);background:#fff5d8;color:#24180d;box-shadow:0 0 9px var(--hit-color)}
 #hunter .paper.search-hit:before{color:#9b491b}
 #hunter .search-badge{font-size:11px;font-weight:800;color:#513000;background:#ffe7a0;border:1px solid #aa761e;border-radius:20px;padding:3px 8px}
 #hunter .shelf-search-info{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;color:#ffe6a7;font-size:13px;width:100%}
@@ -38,7 +42,7 @@ body{background:radial-gradient(ellipse at 100% 0%,#c6e3ed88,transparent 52%),li
 #shelfMoveDialog{width:min(430px,90vw);max-height:85dvh;overflow:auto;box-sizing:border-box}
 #shelfMoveDialog button{background:#fff8ed;color:#241a18;-webkit-text-fill-color:#241a18}
 #shelfMoveDialog label{display:block;margin:14px 0 5px}
-@keyframes hunterGlow{from{box-shadow:inset 0 0 12px #ffe99a,0 0 7px #dca53c}to{box-shadow:inset 0 0 28px #fff7c5,0 0 20px #ffc94a}}
+@keyframes hunterGlow{from{box-shadow:inset 0 0 5px 2px var(--hit-color),0 0 6px 2px #fff,0 0 12px 4px var(--hit-color)}to{box-shadow:inset 0 0 9px 3px var(--hit-color),inset 0 0 25px var(--hit-soft),0 0 9px 3px #fff,0 0 22px 8px var(--hit-color),0 0 38px var(--hit-color)}}
 @media(prefers-reduced-motion:reduce){#hunter .paper.search-hit{animation:none}}
 
 #readEdit,#readClose{color:#000!important;-webkit-text-fill-color:#000!important;background:#fff!important}
@@ -610,6 +614,8 @@ a3Select.onchange=()=>updateA3Info();
 <script>
 (function(){
 const H=id=>document.getElementById(id);let spread=0;let shelfQuery="",hitCursorId=null;
+const shelfGlowColors=new Map(),shelfGlowPalette=["gold","cyan","violet","crimson"];
+function shelfGlowFor(id){if(!shelfGlowColors.has(id))shelfGlowColors.set(id,shelfGlowPalette[Math.floor(Math.random()*shelfGlowPalette.length)]);return shelfGlowColors.get(id);}
 
 const shelfMatches=()=>shelfQuery?(db.maps||[]).filter(m=>m.name.toLocaleLowerCase().includes(shelfQuery.toLocaleLowerCase())):[];
 const searchInfo=document.createElement('div');searchInfo.className='shelf-search-info';searchInfo.hidden=true;
@@ -617,7 +623,7 @@ const searchCount=document.createElement('span');searchCount.setAttribute('role'
 const hitNext=document.createElement('button');hitNext.className='ctrl';hitNext.textContent='次のヒットへ';
 const hitClear=document.createElement('button');hitClear.className='ctrl';hitClear.textContent='検索解除';
 searchInfo.append(searchCount,hitNext,hitClear);H('hunterSpread').before(searchInfo);
-hitClear.onclick=()=>{shelfQuery='';hitCursorId=null;renderHunter()};
+hitClear.onclick=()=>{shelfQuery='';hitCursorId=null;shelfGlowColors.clear();renderHunter()};
 hitNext.onclick=()=>{const hits=shelfMatches();if(!hits.length)return;const i=hits.findIndex(m=>m.id===hitCursorId);const next=hits[(i+1)%hits.length];hitCursorId=next.id;spread=Math.floor(db.maps.findIndex(m=>m.id===next.id)/4);renderHunter();const target=H('hunterSpread').querySelector('[data-map-id="'+CSS.escape(next.id)+'"]');target?.focus({preventScroll:true})};
 function reorderShelf(maps,id,target){const from=maps.findIndex(m=>m.id===id);if(from<0)throw Error('移動するカードがありません');const next=maps.slice(),item=next.splice(from,1)[0];next.splice(Math.max(0,Math.min(target,next.length)),0,item);return next;}
 function moveShelfCard(id){
@@ -674,7 +680,7 @@ function renderHunter(){
  for(let i=0;i<4;i++){
   const m=maps[spread*4+i],card=document.createElement('div'),button=document.createElement('button');card.className='hunter-card';button.className='paper';button.type='button';
   if(m){
-   button.dataset.mapId=m.id;if(shelfQuery&&shelfMatches().some(hit=>hit.id===m.id)){button.classList.add('search-hit');const badge=document.createElement('span');badge.className='search-badge';badge.textContent='✦ 検索ヒット';button.append(badge);}
+   button.dataset.mapId=m.id;if(shelfQuery&&shelfMatches().some(hit=>hit.id===m.id)){button.classList.add('search-hit');button.dataset.glow=shelfGlowFor(m.id);const badge=document.createElement('span');badge.className='search-badge';badge.textContent='✦ 検索ヒット';button.append(badge);}
    const title=document.createElement('strong');title.textContent=m.name;
    const deco=document.createElement('span');deco.className='sigil';deco.textContent=['⚖','✦','⚔','✧'][i];
    const count=document.createElement('em');count.textContent=m.nodes.length+' 項目';button.append(deco,title,count);button.onclick=()=>openMap(m);card.append(button);
@@ -728,7 +734,7 @@ H('nextSpread').onclick=()=>flipSpread(1);
 let sx=0;H('hunterSpread').addEventListener('touchstart',e=>{sx=e.changedTouches[0].clientX},{passive:true});H('hunterSpread').addEventListener('touchend',e=>{let dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>65){if(dx<0)H('nextSpread').click();else H('prevSpread').click()}},{passive:true});
 H('hunterImport').onclick=()=>H('restore').click();H('hunterExport').onclick=()=>H('backup').click();
 H('hunterNew').onclick=()=>{let name=prompt('新しいマップ名');if(!name)return;let m={id:uid(),name,nodes:[{id:uid(),title:name,note:'',kind:'項目',x:0,y:0,color:'#dfd0e2'}],edges:[],updated:Date.now()};db.maps.push(m);persist();renderHunter();};
-H('hunterSearch').onclick=()=>{const q=prompt('マップ名を検索',shelfQuery);if(q===null)return;shelfQuery=q.trim();hitCursorId=null;const hits=shelfMatches();if(hits.length){hitCursorId=hits[0].id;spread=Math.floor(db.maps.findIndex(m=>m.id===hitCursorId)/4)}renderHunter();if(shelfQuery&&!hits.length)alert('該当するマップがありません');};
+H('hunterSearch').onclick=()=>{const q=prompt('マップ名を検索',shelfQuery);if(q===null)return;shelfQuery=q.trim();hitCursorId=null;shelfGlowColors.clear();const hits=shelfMatches();if(hits.length){hitCursorId=hits[0].id;spread=Math.floor(db.maps.findIndex(m=>m.id===hitCursorId)/4)}renderHunter();if(shelfQuery&&!hits.length)alert('該当するマップがありません');};
 // Navigation repair: the original back button captured the original home function
 // before the skill-hunter wrapper was installed. Rebind it explicitly.
 const showCover=()=>{
