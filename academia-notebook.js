@@ -21,6 +21,16 @@
  #acadBook .blockbar button{padding:3px 8px;font-size:12px}
  #acadImport{width:min(570px,95vw);max-height:90dvh;overflow:auto}
  #acadImport textarea{min-height:180px;font:12px ui-monospace,monospace}
+
+ /* Explicit light-surface colors for the dark app theme and iOS Safari. */
+ #acadBook{color:#211923;color-scheme:light}
+ #acadBook .paper,#acadBook .pagebar,#acadBook .controls,#acadBook .blockbar{color:#211923}
+ #acadBook button:not(.primary),#acadImport button:not(.primary){background:#fff;color:#000!important;-webkit-text-fill-color:#000!important;text-shadow:none}
+ #acadBook button.primary,#acadImport button.primary{background:#185f81;color:#fff!important;-webkit-text-fill-color:#fff!important}
+ #acadBook .head,#acadBook .head strong{color:#fff;-webkit-text-fill-color:#fff}
+ #acadBook .head button{color:#000!important;-webkit-text-fill-color:#000!important}
+ #acadBook input,#acadBook textarea,#acadBook select,#acadImport textarea{background:#fff;color:#211923;-webkit-text-fill-color:#211923}
+ #acadBook button:disabled{opacity:1;background:#eee9e2;color:#625b55!important;-webkit-text-fill-color:#625b55!important;border-color:#c6beb4}
  `;document.head.append(style);
  const dialog=document.createElement('dialog');dialog.id='acadBook';document.body.append(dialog);
  const imp=document.createElement('dialog');imp.id='acadImport';imp.innerHTML='<h3>AIの学習内容を取り込む</h3><p>ChatGPTで整理したJSONを貼り付けるか、JSONファイルを選択してください。現在の項目の新しいページとして追加します。</p><textarea id="acadJson" placeholder="JSONをここに貼り付け"></textarea><label>JSONファイル<input id="acadFile" type="file" accept=".json,application/json"></label><div class="actions"><button id="acadCancel">取消</button><button id="acadApply" class="primary">この項目に追加</button></div>';document.body.append(imp);
